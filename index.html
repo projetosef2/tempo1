@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DETETIVE DO TEMPO</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: url('image/fundo.jpg') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-size: 20px;
+    }
+    .container {
+      background-color: rgba(255, 243, 224, 0.95);
+      border-radius: 16px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      max-width: 600px;
+      width: 90%;
+      padding: 30px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+    .fase canvas {
+      max-width: 100%;
+      height: auto;
+      margin: 10px 0;
+    }
+    .fase {
+      display: none;
+    }
+    .visivel {
+      display: block;
+    }
+    .opcao {
+      display: block;
+      margin: 10px auto;
+      padding: 14px 24px;
+      background-color: #ffd54f;
+      border: none;
+      border-radius: 10px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .opcao:hover {
+      background-color: #ffca28;
+    }
+    #pontuacao {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    #reiniciar {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #ffb74d;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #reiniciar:hover {
+      background-color: #ffa726;
+    }
+    #mensagemFinal {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #4caf50;
+      margin-top: 20px;
+    }
+    .relogio-digital {
+      display: inline-block;
+      background-color: #000;
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      font-size: 36px;
+      padding: 15px 30px;
+      border-radius: 10px;
+      box-shadow: inset 0 0 10px #0f0, 0 0 20px #0f0;
+      margin: 15px auto;
+    }
+    .animacao-detetive {
+      font-size: 48px;
+      animation: moverDetetive 2s infinite alternate;
+      margin-top: 20px;
+    }
+    @keyframes moverDetetive {
+      from { transform: translateX(-10px); }
+      to { transform: translateX(10px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🕵️ DETETIVE DO TEMPO</h1>
+    <div id="pontuacao">PONTUAÇÃO: 0</div>
+    <div id="jogo"></div>
+    <div id="mensagemFinal"></div>
+    <button id="reiniciar" onclick="reiniciarJogo()">🔄 REINICIAR</button>
+  </div>
+
+  <audio id="somAcerto" src="audios/acerto.mp3"></audio>
+  <audio id="somErro" src="audios/erro.mp3"></audio>
+  <audio id="somFinal" src="audios/fim.mp3"></audio>
+
+  <script>
+    const fases = [
+      { pergunta: "QUE HORAS ESTÃO MARCADAS NO RELÓGIO DIGITAL?", texto: "07:15", opcoes: ["06:30", "07:15", "08:45"], correta: "07:15" },
+      { pergunta: "QUE HORAS ESTÃO MARCADAS NO RELÓGIO ANALÓGICO?", analogico: "11:30", opcoes: ["11:30", "10:15", "12:00"], correta: "11:30" },
+      { pergunta: "SE A AULA COMEÇA ÀS 8:00 E TERMINA ÀS 9:00, QUANTO TEMPO DURA?", opcoes: ["30 MINUTOS", "1 HORA", "2 HORAS"], correta: "1 HORA" },
+      { pergunta: "O LANCHE COMEÇOU ÀS 9:30 E TERMINOU ÀS 10:00. QUANTO TEMPO DUROU?", opcoes: ["30 MINUTOS", "1 HORA", "15 MINUTOS"], correta: "30 MINUTOS" },
+      { pergunta: "QUE HORAS ESTÃO MARCADAS NO RELÓGIO ANALÓGICO?", analogico: "09:00", opcoes: ["08:00", "09:00", "10:00"], correta: "09:00" },
+      { pergunta: "A PEÇA DE TEATRO COMEÇA ÀS 15:00 E TERMINA ÀS 17:00. QUANTO TEMPO DURA?", opcoes: ["1 HORA", "2 HORAS", "3 HORAS"], correta: "2 HORAS" },
+      { pergunta: "JOÃO COMEÇOU A ESTUDAR ÀS 14:15 E PAROU ÀS 15:15. QUANTO TEMPO ELE ESTUDOU?", opcoes: ["30 MINUTOS", "45 MINUTOS", "1 HORA"], correta: "1 HORA" },
+      { pergunta: "RELÓGIO ANALÓGICO: QUE HORAS SÃO?", analogico: "08:45", opcoes: ["08:30", "08:45", "09:15"], correta: "08:45" },
+      { pergunta: "A ESCOLA ABRE ÀS 07:00 E FECHA ÀS 17:00. QUANTO TEMPO FICA ABERTA?", opcoes: ["9 HORAS", "10 HORAS", "12 HORAS"], correta: "10 HORAS" },
+      { pergunta: "PEDRO FOI AO PARQUINHO DAS 16:00 ÀS 17:30. QUANTO TEMPO ELE FICOU LÁ?", opcoes: ["1 HORA", "1 HORA E MEIA", "2 HORAS"], correta: "1 HORA E MEIA" },
+      { pergunta: "QUAL É A RELAÇÃO ENTRE 1 HORA E MINUTOS?", opcoes: ["30 MINUTOS", "60 MINUTOS", "90 MINUTOS"], correta: "60 MINUTOS" },
+      { pergunta: "O FILME COMEÇOU ÀS 19:00 E TERMINOU ÀS 20:45. QUANTO TEMPO DUROU?", opcoes: ["1H45", "1H30", "2H"], correta: "1H45" },
+      { pergunta: "QUE HORAS ESTÃO MARCADAS NO RELÓGIO ANALÓGICO?", analogico: "10:15", opcoes: ["10:15", "11:15", "09:45"], correta: "10:15" },
+      { pergunta: "SE VOCÊ DORMIR ÀS 21:00 E ACORDAR ÀS 06:00, QUANTAS HORAS DORMIU?", opcoes: ["8 HORAS", "9 HORAS", "7 HORAS"], correta: "9 HORAS" },
+      { pergunta: "RELACIONE: 2 HORAS TEM QUANTOS MINUTOS?", opcoes: ["60", "90", "120"], correta: "120" }
+    ];
+
+    const jogo = document.getElementById("jogo");
+    const somAcerto = document.getElementById("somAcerto");
+    const somErro = document.getElementById("somErro");
+    const somFinal = document.getElementById("somFinal");
+    const pontuacaoEl = document.getElementById("pontuacao");
+    const mensagemFinalEl = document.getElementById("mensagemFinal");
+
+    let faseAtual = 0;
+    let pontuacao = 0;
+
+    function desenharRelogio(horas, minutos) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 200;
+      canvas.height = 200;
+      const ctx = canvas.getContext("2d");
+
+      const cx = 100;
+      const cy = 100;
+      const raio = 90;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, raio, 0, 2 * Math.PI);
+      ctx.stroke();
+
+      ctx.font = "20px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for (let i = 1; i <= 12; i++) {
+        const ang = (i - 3) * (Math.PI * 2) / 12;
+        ctx.fillText(i, cx + Math.cos(ang) * 70, cy + Math.sin(ang) * 70);
+      }
+
+      const anguloHora = ((horas % 12) + minutos / 60) * (Math.PI * 2) / 12 - Math.PI / 2;
+      const anguloMin = minutos * (Math.PI * 2) / 60 - Math.PI / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(anguloHora) * 40, cy + Math.sin(anguloHora) * 40);
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(anguloMin) * 70, cy + Math.sin(anguloMin) * 70);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      return canvas;
+    }
+
+    function mostrarFase() {
+      jogo.innerHTML = "";
+      mensagemFinalEl.textContent = "";
+      const fase = fases[faseAtual];
+      const div = document.createElement("div");
+      div.className = "fase visivel";
+
+      const p = document.createElement("p");
+      p.innerText = fase.pergunta;
+      div.appendChild(p);
+
+      if (fase.texto) {
+        const relogioDigital = document.createElement("div");
+        relogioDigital.className = "relogio-digital";
+        relogioDigital.textContent = fase.texto;
+        div.appendChild(relogioDigital);
+      }
+
+      if (fase.analogico) {
+        const [h, m] = fase.analogico.split(":").map(Number);
+        div.appendChild(desenharRelogio(h, m));
+      }
+
+      fase.opcoes.forEach(opcao => {
+        const btn = document.createElement("button");
+        btn.className = "opcao";
+        btn.innerText = opcao;
+        btn.onclick = () => verificarResposta(opcao);
+        div.appendChild(btn);
+      });
+
+      jogo.appendChild(div);
+    }
+
+    function verificarResposta(resposta) {
+      const fase = fases[faseAtual];
+      if (resposta === fase.correta) {
+        somAcerto.play();
+        pontuacao += 10;
+        faseAtual++;
+        atualizarPontuacao();
+        if (faseAtual < fases.length) {
+          setTimeout(mostrarFase, 1000);
+        } else {
+          somFinal.play();
+          mensagemFinalEl.innerHTML = "🎉 PARABÉNS! VOCÊ CONCLUIU TODAS AS FASES!<div class='animacao-detetive'>🕵️‍♂️🔍</div>";
+        }
+      } else {
+        somErro.play();
+        pontuacao = Math.max(0, pontuacao - 5);
+        atualizarPontuacao();
+        setTimeout(() => alert("OPS! TENTE NOVAMENTE!"), 300);
+      }
+    }
+
+    function atualizarPontuacao() {
+      pontuacaoEl.textContent = `PONTUAÇÃO: ${pontuacao}`;
+    }
+
+    function reiniciarJogo() {
+      faseAtual = 0;
+      pontuacao = 0;
+      atualizarPontuacao();
+      mostrarFase();
+    }
+
+    mostrarFase();
+  </script>
+</body>
+</html>
